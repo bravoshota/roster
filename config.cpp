@@ -21,14 +21,14 @@ void Config::initialize()
     if (!configFile.exists())
     {
         QMessageBox(QMessageBox::Warning, "Config Error",
-                    QString("Missing config file: \"%1\"").arg(CONFIG_FILE));
+                    QString("Missing config file: \"%1\"").arg(fullName)).exec();
         return;
     }
 
-    if (configFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    if (configFile.open(QIODevice::ReadOnly | QIODevice::Text) == false)
     {
         QMessageBox(QMessageBox::Warning, "Config Error",
-                    QString("Can't open file: \"%1\"").arg(CONFIG_FILE));
+                    QString("Can't open file: \"%1\"").arg(fullName)).exec();
         return;
     }
 
@@ -38,7 +38,7 @@ void Config::initialize()
     QJsonDocument jsonDocument = QJsonDocument::fromJson(configText.toUtf8());
     if (jsonDocument.isObject() == false)
     {
-        QMessageBox(QMessageBox::Warning, "Config Error", "not a valid object data");
+        QMessageBox(QMessageBox::Warning, "Config Error", "not a valid object data").exec();
         return;
     }
 
@@ -48,14 +48,14 @@ void Config::initialize()
     m_downloadURL = map["URL"].toString();
     if (m_downloadURL.isEmpty())
     {
-        QMessageBox(QMessageBox::Warning, "Config Error", QString("Missing \"URL\" configuration"));
+        QMessageBox(QMessageBox::Warning, "Config Error", "Missing \"URL\" configuration").exec();
         return;
     }
 
     m_rosterFileName = map["rosterFile"].toString();
     if (m_rosterFileName.isEmpty())
     {
-        QMessageBox(QMessageBox::Warning, "Config Error", QString("Missing \"rosterFile\" configuration"));
+        QMessageBox(QMessageBox::Warning, "Config Error", "Missing \"rosterFile\" configuration").exec();
         return;
     }
 

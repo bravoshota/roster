@@ -1,7 +1,7 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
+#include "rosterloader.h"
 
 namespace Ui {
 class MainWindow;
@@ -16,10 +16,9 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_refreshButton_clicked();
+    void on_reloadButton_clicked();
 
 private:
     Ui::MainWindow *ui;
+    RosterLoader m_rosterLoader;
 };
-
-#endif // MAINWINDOW_H

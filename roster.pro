@@ -37,13 +37,12 @@ HEADERS += \
     rosterloader.h \
     globals.h
 
-#FORMS += \
-#    mainwindow.ui
+FORMS += \
+    mainwindow.ui
 
 CONFIG_FILE = config.json
 
 DISTFILES += \
-    mainwindow.ui \
     $$CONFIG_FILE
 
 #copy config file to build directory

@@ -30,14 +30,14 @@ void Downloader::sslErrors(const QList<QSslError> &errors)
         str += error.errorString() + "/r/n";
     }
 
-    QMessageBox(QMessageBox::Warning, "SSL Error", str);
+    QMessageBox(QMessageBox::Warning, "SSL Error", str).exec();
 }
 
 void Downloader::downloadFinished(QNetworkReply *reply)
 {
     if (reply->error())
     {
-        QMessageBox(QMessageBox::Warning, "Network error", reply->errorString());
+        QMessageBox(QMessageBox::Warning, "Network error", reply->errorString()).exec();
         return;
     }
 
@@ -51,14 +51,15 @@ void Downloader::downloadFinished(QNetworkReply *reply)
     case 305:
     case 307:
     case 308:
-        QMessageBox(QMessageBox::Warning, "Network status error", QString("code = %1").arg(replyCode));
+        QMessageBox(QMessageBox::Warning, "Network status error",
+                    QString("code = %1").arg(replyCode)).exec();
         return;
     }
 
     QByteArray downloadedData = reply->readAll();
     if (downloadedData.isEmpty())
     {
-        QMessageBox(QMessageBox::Warning, "Error", "Unknown error was occured.");
+        QMessageBox(QMessageBox::Warning, "Error", "Unknown error was occured.").exec();
         return;
     }
 

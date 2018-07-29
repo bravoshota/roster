@@ -12,8 +12,9 @@ class Downloader : public QObject
 public:
     Downloader(const QString &url, const QString &outputFile);
 
-public slots:
     void execute();
+
+public slots:
     void downloadFinished(QNetworkReply *reply);
     void sslErrors(const QList<QSslError> &errors);
 

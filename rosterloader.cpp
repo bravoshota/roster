@@ -7,14 +7,15 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <algorithm>
+#include <limits>
 
-rosterLoader::rosterLoader()
+RosterLoader::RosterLoader()
     : m_invalidRostersCount(0)
     , m_hasError(false)
 {
 }
 
-void rosterLoader::load()
+void RosterLoader::load()
 {
     m_invalidRostersCount = 0;
     m_rosterArr.clear();
@@ -27,14 +28,14 @@ void rosterLoader::load()
     if (!rosterFile.exists())
     {
         QMessageBox(QMessageBox::Warning, "Roster loader Error",
-                    QString("Missing file: \"%1\"").arg(Config::rosterFileName()));
+                    QString("Missing file: \"%1\"").arg(Config::rosterFileName())).exec();
         return;
     }
 
-    if (rosterFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    if (!rosterFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QMessageBox(QMessageBox::Warning, "Roster loader Error",
-                    QString("Can't open file: \"%1\"").arg(Config::rosterFileName()));
+                    QString("Can't open file: \"%1\"").arg(Config::rosterFileName())).exec();
         return;
     }
 
@@ -44,7 +45,7 @@ void rosterLoader::load()
     QJsonDocument jsonDocument = QJsonDocument::fromJson(rosterTextData.toUtf8());
     if (jsonDocument.isObject() == false)
     {
-        QMessageBox(QMessageBox::Warning, "Roster loader Error", "not a valid object data");
+        QMessageBox(QMessageBox::Warning, "Roster loader Error", "not a valid object data").exec();
         return;
     }
 
@@ -58,7 +59,7 @@ void rosterLoader::load()
     {
         QMessageBox(QMessageBox::Warning,
                     "Roster data error",
-                    "roster array count is not equal to rosterSize parameter");
+                    "roster array count is not equal to rosterSize parameter").exec();
         return;
     }
 
@@ -73,17 +74,13 @@ void rosterLoader::load()
             continue;
 
         if (loadSingleRoster(rosterVariant.toMap(), m_rosterArr[currentRoster], groupsMap))
-            ++currentRoster; // if single roster is successfully converted then do increment
-    }
+            ++m_invalidRostersCount; // count invalid rosters
 
-    // calculate invalid rosters count
-    m_invalidRostersCount = rostersCount - currentRoster;
+        ++currentRoster;
+    }
 
     // if at least one roster is invalid then consider error has occured
     m_hasError = (m_invalidRostersCount > 0);
-
-    // it won't affect if everithing passed validation process
-    m_rosterArr.resize(rostersCount);
 
     // sort by group id and by name inside it
     // using STL for sorting because passing lambda hits warning for qSort (QtAlgorithms):
@@ -91,8 +88,8 @@ void rosterLoader::load()
     std::sort(m_rosterArr.begin(), m_rosterArr.end(), [&](const Roster &r1, const Roster &r2)
     {
         // either id is less or sorted alphabetically if ids are equal
-        return  (r1.id < r2.id) ||
-                (r1.id ==r2.id && (r1.account.firstName + r1.account.lastName) < (r2.account.firstName + r2.account.lastName));
+        return  (r1.groupIndex < r2.groupIndex) ||
+                (r1.groupIndex ==r2.groupIndex && (r1.account.firstName + r1.account.lastName) < (r2.account.firstName + r2.account.lastName));
     });
 
     // generate groups array from map
@@ -119,25 +116,38 @@ void rosterLoader::load()
     }
 }
 
-bool rosterLoader::loadSingleRoster(const QVariantMap &from, Roster &to, QMap<int, QString> &groupsMap)
+bool RosterLoader::loadSingleRoster(const QVariantMap &from, Roster &to, QMap<int, QString> &groupsMap) const
 {
+    bool warning = false;
     // id
     {
         to.id = from["id"].toString();
         if (to.id.isEmpty())
-            return false;
+            warning = true;
     }
 
     // group
     {
+        QString groupName;
         bool ok;
         to.groupIndex = from["groupOrder"].toInt(&ok);
         if (!ok || to.groupIndex < 0)
-            return false;
+        {
+            ok = false;
+        }
+        else
+        {
+            groupName = from["group"].toString();
+            if (groupName.isEmpty())
+                ok = false;
+        }
 
-        QString groupName = from["group"].toString();
-        if (groupName.isEmpty())
-            return false;
+        if (!ok)
+        {
+            // add invalid group with empty name anyway
+            warning = true;
+            to.groupIndex = std::numeric_limits<int>::max();
+        }
 
         auto groupIt = groupsMap.find(to.groupIndex);
         if (groupIt == groupsMap.end())
@@ -149,8 +159,13 @@ bool rosterLoader::loadSingleRoster(const QVariantMap &from, Roster &to, QMap<in
         {
             // if there already exists such group then let's compare
             // that group names are identical
-            if (groupsMap[to.groupIndex] != groupName)
-                return false;
+            if (groupIt.value() != groupName)
+            {
+                // if they aren't identical then push it to be invalid index
+                warning = true;
+                to.groupIndex = std::numeric_limits<int>::max();
+                groupsMap[to.groupIndex] = "";
+            }
         }
     }
 
@@ -158,36 +173,38 @@ bool rosterLoader::loadSingleRoster(const QVariantMap &from, Roster &to, QMap<in
     {
         QVariant accountVariant = from["account"];
         if (accountVariant.isValid() == false)
-            return false;
-
-        if (loadSingleAccount(accountVariant.toMap(), to.account) == false)
-            return false;
+            warning = true;
+        else
+        if (loadSingleAccount(accountVariant.toMap(), to.account))
+            warning = true;
     }
 
-    return true;
+    return warning;
 }
 
-bool rosterLoader::loadSingleAccount(const QVariantMap &from, Roster::Account &to)
+bool RosterLoader::loadSingleAccount(const QVariantMap &from, Roster::Account &to) const
 {
+    bool warning = false;
+
     // userName
     {
         to.userName = from["username"].toString();
         if (to.userName.isEmpty())
-            return false;
+            warning = true;
     }
 
     // firstName
     {
         to.firstName = from["firstName"].toString();
         if (to.firstName.isEmpty())
-            return false;
+            warning = true;
     }
 
     // lastName
     {
         to.lastName = from["lastName"].toString();
         if (to.lastName.isEmpty())
-            return false;
+            warning = true;
     }
 
     // sex
@@ -207,7 +224,7 @@ bool rosterLoader::loadSingleAccount(const QVariantMap &from, Roster::Account &t
         }
         else
         {
-            return false;
+            warning = true;
         }
     }
 
@@ -215,28 +232,30 @@ bool rosterLoader::loadSingleAccount(const QVariantMap &from, Roster::Account &t
     {
         to.country = from["country"].toString();
         if (to.country.isEmpty())
-            return false;
+            warning = true;
     }
 
     // language
     {
         to.language = from["language"].toString();
         if (to.language.isEmpty())
-            return false;
+            warning = true;
     }
 
     // birthday
     {
-        to.birthday = from["birthday"].toDateTime();
         bool ok;
         int timeValue = from["birthday"].toUInt(&ok);
-        if (!ok)
-            return false;
+        if (ok)
+        {
+            to.birthday = QDateTime::fromTime_t(timeValue);
+            if (to.birthday.isValid() == false)
+                ok = false;
+        }
 
-        to.birthday = QDateTime::fromTime_t(timeValue);
-        if (!to.birthday.isValid())
-            return false;
+        if (!ok)
+            warning = true;
     }
 
-    return true;
+    return warning;
 }
