@@ -1,61 +1,65 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "config.h"
-#include "downloader.h"
 
-namespace
-{
-const QStringList columnHeaders
-{
-    {""}, {"First Name"}, {"Last Name"}, {"Group"}
-};
-}
-
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+    , m_rosterModel(nullptr)
 {
     ui->setupUi(this);
-    ui->tableWidget->setColumnCount(columnHeaders.size());
+    connect(&m_rosterModel, SIGNAL(newDataFetched(QString)), SLOT(newDataFetched(QString)));
+
+    m_activePalette = new QPalette(ui->filterEdit->palette());
+    m_grayPalette = new QPalette();
+    m_grayPalette->setColor(QPalette::Text, Qt::gray);
+    ui->filterEdit->setPalette(*m_grayPalette);
+
+    const auto &origFont = ui->filterEdit->font();
+    m_activeFont = new QFont(origFont.family(), 10);
+    m_grayFont = new QFont(origFont.family(), 10, -1, true);
+    ui->filterEdit->setFont(*m_grayFont);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete m_grayPalette;
+    delete m_activePalette;
+    delete m_grayFont;
+    delete m_activeFont;
 }
 
 void MainWindow::on_reloadButton_clicked()
 {
-    Downloader downloader(Config::downloadURL(), Config::rosterFileName());
-    downloader.execute();
+    ui->tableView->setModel(nullptr);
+    m_rosterModel.reload();
+    ui->tableView->setModel(&m_rosterModel);
 
-    m_rosterLoader.load();
-
-    for (int i = 0; i < ui->tableWidget->rowCount(); ++i)
-        for (int j = 0; j < ui->tableWidget->columnCount(); ++j)
-            delete ui->tableWidget->item(i, j);
-
-    ui->tableWidget->clear();
-    ui->tableWidget->setRowCount(m_rosterLoader.rosters().count());
-
-    const auto &rosters = m_rosterLoader.rosters();
-    const auto &groups = m_rosterLoader.groups();
-    int currentRow = 0;
-    for (const Roster &roster : rosters)
+    if (m_rosterModel.columnCount() == 4)
     {
-        QString avatar;
-        if (!roster.account.firstName.isEmpty() &&
-            !roster.account.lastName.isEmpty())
-        {
-            avatar.push_back(roster.account.firstName[0].toUpper());
-            avatar.push_back(roster.account.lastName[0].toUpper());
-        }
-        ui->tableWidget->setItem(currentRow, 0, new QTableWidgetItem(avatar));
-        ui->tableWidget->setItem(currentRow, 1, new QTableWidgetItem(roster.account.firstName));
-        ui->tableWidget->setItem(currentRow, 2, new QTableWidgetItem(roster.account.lastName));
-        ui->tableWidget->setItem(currentRow, 3, new QTableWidgetItem(groups[roster.groupIndex].name));
-        ++currentRow;
+        ui->tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+        ui->tableView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+        ui->tableView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+        ui->tableView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+        ui->tableView->setColumnWidth(0, 10);
     }
+}
 
-    ui->tableWidget->setHorizontalHeaderLabels(columnHeaders);
+void MainWindow::on_filterEdit_textChanged(const QString &text)
+{
+    if (text.isEmpty())
+    {
+        ui->filterEdit->setPalette(*m_grayPalette);
+        ui->filterEdit->setFont(*m_grayFont);
+    }
+    else
+    {
+        ui->filterEdit->setPalette(*m_activePalette);
+        ui->filterEdit->setFont(*m_activeFont);
+    }
+}
+
+void MainWindow::newDataFetched(QString text)
+{
+    ui->label->setText(text);
 }
