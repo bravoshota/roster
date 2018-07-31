@@ -16,6 +16,8 @@ public:
     void update();
     void setFilter(const QString &filterText, bool invokeFetching = true);
 
+    const Roster &getRoster(int index) const;
+
 signals:
     void newDataFetched(QString);
 

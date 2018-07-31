@@ -1,19 +1,26 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "rostertablemodel.h"
+#include <dialog.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_rosterDialog(nullptr)
     , m_tableModel(new RosterTableModel(nullptr))
 {
     ui->setupUi(this);
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableView->setFocusPolicy(Qt::NoFocus);
+    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     connect(m_tableModel, SIGNAL(newDataFetched(QString)), SLOT(newDataFetched(QString)));
 }
 
 MainWindow::~MainWindow()
 {
+    if (m_rosterDialog)
+        delete m_rosterDialog;
+
     delete ui;
     delete m_tableModel;
 }
@@ -49,7 +56,27 @@ void MainWindow::on_filterEdit_textEdited(const QString &text)
     resetTableView();
 }
 
+void MainWindow::on_tableView_doubleClicked(const QModelIndex &index)
+{
+    if (m_rosterDialog)
+        delete m_rosterDialog;
+
+    m_rosterDialog = new Dialog(this, m_tableModel->getRoster(index.row()));
+    m_rosterDialog->show();
+
+    connect(m_rosterDialog, SIGNAL(finished(int)), SLOT(finished(int)));
+}
+
 void MainWindow::newDataFetched(QString text)
 {
     ui->label->setText(text);
+}
+
+void MainWindow::finished(int /*result*/)
+{
+    if (m_rosterDialog != nullptr)
+    {
+        delete m_rosterDialog;
+        m_rosterDialog = nullptr;
+    }
 }

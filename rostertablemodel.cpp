@@ -174,3 +174,8 @@ void RosterTableModel::setFilter(const QString &filterText, bool invokeFetching)
         m_filteredResults.clear();
     }
 }
+
+const Roster &RosterTableModel::getRoster(int index) const
+{
+    return m_rosterParser.rosters()[m_filterText.isEmpty() ? index : m_filteredResults[index]];
+}

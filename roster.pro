@@ -29,7 +29,8 @@ SOURCES += \
     downloader.cpp \
     config.cpp \
     rosterparser.cpp \
-    rostertablemodel.cpp
+    rostertablemodel.cpp \
+    dialog.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -37,10 +38,12 @@ HEADERS += \
     config.h \
     globals.h \
     rosterparser.h \
-    rostertablemodel.h
+    rostertablemodel.h \
+    dialog.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    dialog.ui
 
 CONFIG_FILE = config.json
 

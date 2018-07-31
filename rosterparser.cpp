@@ -186,6 +186,13 @@ bool RosterParser::loadSingleAccount(const QVariantMap &from, Roster::Account &t
 {
     bool warning = false;
 
+    // id
+    {
+        to.id = from["id"].toString();
+        if (to.id.isEmpty())
+            warning = true;
+    }
+
     // userName
     {
         to.userName = from["username"].toString();
@@ -235,10 +242,31 @@ bool RosterParser::loadSingleAccount(const QVariantMap &from, Roster::Account &t
             warning = true;
     }
 
+    // time zone
+    {
+        to.timezone = from["timezone"].toString();
+        if (to.timezone.isEmpty())
+            warning = true;
+    }
+
     // language
     {
         to.language = from["language"].toString();
         if (to.language.isEmpty())
+            warning = true;
+    }
+
+    // id
+    {
+        to.id = from["id"].toString();
+        if (to.id.isEmpty())
+            warning = true;
+    }
+
+    // badge
+    {
+        to.badge = from["badge"].toString();
+        if (to.badge.isEmpty())
             warning = true;
     }
 
@@ -250,6 +278,21 @@ bool RosterParser::loadSingleAccount(const QVariantMap &from, Roster::Account &t
         {
             to.birthday = QDateTime::fromTime_t(timeValue);
             if (to.birthday.isValid() == false)
+                ok = false;
+        }
+
+        if (!ok)
+            warning = true;
+    }
+
+    // create time
+    {
+        bool ok;
+        int timeValue = from["birthday"].toUInt(&ok);
+        if (ok)
+        {
+            to.createTime = QDateTime::fromTime_t(timeValue);
+            if (to.createTime.isValid() == false)
                 ok = false;
         }
 
