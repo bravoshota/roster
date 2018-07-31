@@ -9,10 +9,10 @@ class RosterLoader
 public:
     RosterLoader();
 
-    void load();
+    void update();
 
-    const QVector<RosterGroup> &groups() const { return m_groupArr; }
-    const QVector<Roster> &rosters() const { return m_rosterArr; }
+    inline const QVector<RosterGroup> &groups() const { return m_groupArr; }
+    inline const QVector<Roster> &rosters() const { return m_rosterArr; }
 
 protected:
     bool loadSingleRoster(const QVariantMap &from, Roster &to, QMap<int, QString> &groupsMap) const;

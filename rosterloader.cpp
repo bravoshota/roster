@@ -15,7 +15,7 @@ RosterLoader::RosterLoader()
 {
 }
 
-void RosterLoader::load()
+void RosterLoader::update()
 {
     m_invalidRostersCount = 0;
     m_rosterArr.clear();

@@ -13,7 +13,8 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
-    void reload();
+    void update();
+    void setFilter(const QString &filterText, bool invokeFetching = true);
 
 signals:
     void newDataFetched(QString);
@@ -24,5 +25,7 @@ protected:
 
 private:
     RosterLoader m_rosterLoader;
+    QVector<int> m_filteredResults;
+    QString m_filterText;
     int m_fetchedCount;
 };

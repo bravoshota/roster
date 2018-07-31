@@ -1,9 +1,11 @@
 #pragma once
 
-#include "rostermodel.h"
 #include <QMainWindow>
 
-namespace Ui {
+class RosterModel;
+
+namespace Ui
+{
 class MainWindow;
 }
 
@@ -15,17 +17,16 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+protected:
+    void resetTableView();
+
 private slots:
-    void on_reloadButton_clicked();
-    void on_filterEdit_textChanged(const QString &text);
+    void on_updateButton_clicked();
+    void on_filterEdit_textEdited(const QString &arg1);
 
     void newDataFetched(QString text);
 
 private:
     Ui::MainWindow *ui;
-    RosterModel m_rosterModel;
-    QPalette *m_grayPalette;
-    QPalette *m_activePalette;
-    QFont *m_grayFont;
-    QFont *m_activeFont;
+    RosterModel *m_rosterModel;
 };

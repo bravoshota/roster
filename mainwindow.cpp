@@ -1,41 +1,28 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "rostermodel.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_rosterModel(nullptr)
+    , m_rosterModel(new RosterModel(nullptr))
 {
     ui->setupUi(this);
-    connect(&m_rosterModel, SIGNAL(newDataFetched(QString)), SLOT(newDataFetched(QString)));
-
-    m_activePalette = new QPalette(ui->filterEdit->palette());
-    m_grayPalette = new QPalette();
-    m_grayPalette->setColor(QPalette::Text, Qt::gray);
-    ui->filterEdit->setPalette(*m_grayPalette);
-
-    const auto &origFont = ui->filterEdit->font();
-    m_activeFont = new QFont(origFont.family(), 10);
-    m_grayFont = new QFont(origFont.family(), 10, -1, true);
-    ui->filterEdit->setFont(*m_grayFont);
+    connect(m_rosterModel, SIGNAL(newDataFetched(QString)), SLOT(newDataFetched(QString)));
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete m_grayPalette;
-    delete m_activePalette;
-    delete m_grayFont;
-    delete m_activeFont;
+    delete m_rosterModel;
 }
 
-void MainWindow::on_reloadButton_clicked()
+void MainWindow::resetTableView()
 {
     ui->tableView->setModel(nullptr);
-    m_rosterModel.reload();
-    ui->tableView->setModel(&m_rosterModel);
+    ui->tableView->setModel(m_rosterModel);
 
-    if (m_rosterModel.columnCount() == 4)
+    if (m_rosterModel->columnCount() == 4)
     {
         ui->tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
         ui->tableView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
@@ -45,18 +32,20 @@ void MainWindow::on_reloadButton_clicked()
     }
 }
 
-void MainWindow::on_filterEdit_textChanged(const QString &text)
+void MainWindow::on_updateButton_clicked()
 {
-    if (text.isEmpty())
-    {
-        ui->filterEdit->setPalette(*m_grayPalette);
-        ui->filterEdit->setFont(*m_grayFont);
-    }
-    else
-    {
-        ui->filterEdit->setPalette(*m_activePalette);
-        ui->filterEdit->setFont(*m_activeFont);
-    }
+    ui->filterEdit->clear();
+    m_rosterModel->update();
+    resetTableView();
+}
+
+void MainWindow::on_filterEdit_textEdited(const QString &text)
+{
+    if (text.size() == 1 || text.size() == 2)
+        return;
+
+    m_rosterModel->setFilter(text);
+    resetTableView();
 }
 
 void MainWindow::newDataFetched(QString text)
