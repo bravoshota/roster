@@ -28,16 +28,16 @@ SOURCES += \
     mainwindow.cpp \
     downloader.cpp \
     config.cpp \
-    rosterloader.cpp \
-    rostermodel.cpp
+    rosterparser.cpp \
+    rostertablemodel.cpp
 
 HEADERS += \
     mainwindow.h \
     downloader.h \
     config.h \
-    rosterloader.h \
     globals.h \
-    rostermodel.h
+    rosterparser.h \
+    rostertablemodel.h
 
 FORMS += \
     mainwindow.ui

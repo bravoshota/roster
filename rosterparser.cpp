@@ -1,4 +1,4 @@
-#include "rosterloader.h"
+#include "rosterparser.h"
 #include "config.h"
 
 #include <QDir>
@@ -9,13 +9,13 @@
 #include <algorithm>
 #include <limits>
 
-RosterLoader::RosterLoader()
+RosterParser::RosterParser()
     : m_invalidRostersCount(0)
     , m_hasError(false)
 {
 }
 
-void RosterLoader::update()
+void RosterParser::update()
 {
     m_invalidRostersCount = 0;
     m_rosterArr.clear();
@@ -116,7 +116,7 @@ void RosterLoader::update()
     }
 }
 
-bool RosterLoader::loadSingleRoster(const QVariantMap &from, Roster &to, QMap<int, QString> &groupsMap) const
+bool RosterParser::loadSingleRoster(const QVariantMap &from, Roster &to, QMap<int, QString> &groupsMap) const
 {
     bool warning = false;
     // id
@@ -182,7 +182,7 @@ bool RosterLoader::loadSingleRoster(const QVariantMap &from, Roster &to, QMap<in
     return warning;
 }
 
-bool RosterLoader::loadSingleAccount(const QVariantMap &from, Roster::Account &to) const
+bool RosterParser::loadSingleAccount(const QVariantMap &from, Roster::Account &to) const
 {
     bool warning = false;
 

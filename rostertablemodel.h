@@ -1,13 +1,13 @@
 #pragma once
 
-#include "rosterloader.h"
+#include "rosterparser.h"
 #include <QAbstractTableModel>
 
-class RosterModel : public QAbstractTableModel
+class RosterTableModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    RosterModel(QObject *parent);
+    RosterTableModel(QObject *parent);
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -24,7 +24,7 @@ protected:
     void fetchMore(const QModelIndex &parent) override;
 
 private:
-    RosterLoader m_rosterLoader;
+    RosterParser m_rosterParser;
     QVector<int> m_filteredResults;
     QString m_filterText;
     int m_fetchedCount;

@@ -4,10 +4,10 @@
 #include <QVector>
 #include "globals.h"
 
-class RosterLoader
+class RosterParser
 {
 public:
-    RosterLoader();
+    RosterParser();
 
     void update();
 

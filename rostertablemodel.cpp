@@ -1,31 +1,31 @@
-#include "rostermodel.h"
+#include "rostertablemodel.h"
 #include "downloader.h"
 #include "config.h"
 #include <QDebug>
 
-RosterModel::RosterModel(QObject *parent)
+RosterTableModel::RosterTableModel(QObject *parent)
     : QAbstractTableModel(parent)
     , m_fetchedCount(0)
 {
 }
 
-int RosterModel::rowCount(const QModelIndex &/*parent*/) const
+int RosterTableModel::rowCount(const QModelIndex &/*parent*/) const
 {
     return m_fetchedCount;
 }
 
-int RosterModel::columnCount(const QModelIndex &/*parent*/) const
+int RosterTableModel::columnCount(const QModelIndex &/*parent*/) const
 {
     return 4;
 }
 
-QVariant RosterModel::data(const QModelIndex &index, int role) const
+QVariant RosterTableModel::data(const QModelIndex &index, int role) const
 {
     if (role == Qt::DisplayRole)
     {
         auto addSingleRow = [this](int row, int column)->QVariant
         {
-            const auto &roster =  m_rosterLoader.rosters()[row];
+            const auto &roster =  m_rosterParser.rosters()[row];
 
             switch (column)
             {
@@ -42,7 +42,7 @@ QVariant RosterModel::data(const QModelIndex &index, int role) const
             }
             case 1: return roster.account.firstName;
             case 2: return roster.account.lastName;
-            case 3: return m_rosterLoader.groups()[roster.groupIndex].name;
+            case 3: return m_rosterParser.groups()[roster.groupIndex].name;
             }
             return QVariant();
         };
@@ -50,7 +50,7 @@ QVariant RosterModel::data(const QModelIndex &index, int role) const
         if (m_filterText.isEmpty())
         {
             if (index.column() >= 0 && index.column() < 4 &&
-                index.row() >= 0 && index.row() < m_rosterLoader.rosters().count())
+                index.row() >= 0 && index.row() < m_rosterParser.rosters().count())
             {
                 QVariant variant = addSingleRow(index.row(), index.column());
                 if (variant.isValid())
@@ -74,7 +74,7 @@ QVariant RosterModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-QVariant RosterModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant RosterTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (role == Qt::DisplayRole)
     {
@@ -93,18 +93,18 @@ QVariant RosterModel::headerData(int section, Qt::Orientation orientation, int r
     return QVariant();
 }
 
-bool RosterModel::canFetchMore(const QModelIndex &/*parent*/) const
+bool RosterTableModel::canFetchMore(const QModelIndex &/*parent*/) const
 {
-    return m_fetchedCount < m_rosterLoader.rosters().size();
+    return m_fetchedCount < m_rosterParser.rosters().size();
 }
 
-void RosterModel::fetchMore(const QModelIndex &parent)
+void RosterTableModel::fetchMore(const QModelIndex &parent)
 {
     const int pageSize = 64;
 
     if (m_filterText.isEmpty())
     {
-        int remaining = m_rosterLoader.rosters().size() - m_fetchedCount;
+        int remaining = m_rosterParser.rosters().size() - m_fetchedCount;
         int itemsToFetch = qMin(pageSize, remaining);
 
         if (itemsToFetch <= 0)
@@ -117,15 +117,15 @@ void RosterModel::fetchMore(const QModelIndex &parent)
         endInsertRows();
 
         QString outputText;
-        outputText.sprintf("Showing %d out of %d..", m_fetchedCount, m_rosterLoader.rosters().size());
+        outputText.sprintf("Showing %d out of %d..", m_fetchedCount, m_rosterParser.rosters().size());
         emit newDataFetched(outputText);
     }
     else
     {
         int fetchedCount = 0;
-        while (m_fetchedCount < m_rosterLoader.rosters().size())
+        while (m_fetchedCount < m_rosterParser.rosters().size())
         {
-            const Roster::Account &account = m_rosterLoader.rosters()[m_fetchedCount].account;
+            const Roster::Account &account = m_rosterParser.rosters()[m_fetchedCount].account;
             if ((account.firstName + " " + account.lastName).toLower().contains(m_filterText))
             {
                 m_filteredResults.push_back(m_fetchedCount);
@@ -146,25 +146,25 @@ void RosterModel::fetchMore(const QModelIndex &parent)
             QString outputText;
             outputText.sprintf("Showing filtered results %d out of total %d..",
                                m_filteredResults.size(),
-                               m_rosterLoader.rosters().size());
+                               m_rosterParser.rosters().size());
             emit newDataFetched(outputText);
         }
     }
 }
 
-void RosterModel::update()
+void RosterTableModel::update()
 {
     Downloader downloader(Config::downloadURL(), Config::rosterFileName());
     downloader.execute();
 
     // slot here to be connected on downloadFinished signal
 
-    m_rosterLoader.update();
+    m_rosterParser.update();
 
     setFilter("");
 }
 
-void RosterModel::setFilter(const QString &filterText, bool invokeFetching)
+void RosterTableModel::setFilter(const QString &filterText, bool invokeFetching)
 {
     m_filterText = filterText.toLower();
 

@@ -2,7 +2,7 @@
 
 #include <QMainWindow>
 
-class RosterModel;
+class RosterTableModel;
 
 namespace Ui
 {
@@ -28,5 +28,5 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    RosterModel *m_rosterModel;
+    RosterTableModel *m_tableModel;
 };
