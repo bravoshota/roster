@@ -31,7 +31,8 @@ SOURCES += \
     rosterparser.cpp \
     rostertablemodel.cpp \
     dialog.cpp \
-    common.cpp
+    common.cpp \
+    progressdialog.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -40,7 +41,8 @@ HEADERS += \
     rosterparser.h \
     rostertablemodel.h \
     dialog.h \
-    common.h
+    common.h \
+    progressdialog.h
 
 FORMS += \
     mainwindow.ui \

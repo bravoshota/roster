@@ -1,6 +1,5 @@
 #include "rosterparser.h"
 #include "config.h"
-
 #include <QDir>
 #include <QFile>
 #include <QMessageBox>

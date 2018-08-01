@@ -50,6 +50,11 @@ QPixmap Roster::createPixmap(const QSize iconSize, QColor bkgndColor) const
 
     pen.setStyle(Qt::SolidLine);
     painter.setPen(pen);
+
+    QFont font = painter.font();
+    font.setPixelSize(iconSize.height()*3/5);
+    painter.setFont(font);
     painter.drawText(pixMap.rect(), Qt::AlignCenter, initials);
+
     return pixMap;
 }

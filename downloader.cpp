@@ -1,85 +1,96 @@
 #include "downloader.h"
-#include <QFile>
+#include "progressdialog.h"
 #include <QtCore>
 #include <QNetworkReply>
 #include <QMessageBox>
+#include <QAuthenticator>
 
-Downloader::Downloader(const QString &url, const QString &outputFile)
+Downloader::Downloader(const QString &url, const QString &outputFileName)
     : m_reply(nullptr)
-    , m_outputFile(outputFile)
+    , m_outputFile(outputFileName)
 {
     m_url = QUrl::fromEncoded(url.toUtf8());
-    connect(&m_manager, SIGNAL(finished(QNetworkReply *)),
-             SLOT(downloadFinished(QNetworkReply *)));
+    Q_ASSERT(m_url.isValid());
+    connect(&m_manager, &QNetworkAccessManager::finished,
+            this,       &Downloader::slotFinished);
+    connect(&m_manager, &QNetworkAccessManager::sslErrors,
+            this,       &Downloader::slotSslErrors);
 }
 
 void Downloader::execute()
 {
+    if (m_outputFile.exists())
+        m_outputFile.remove();
+
+    if (!m_outputFile.open(QIODevice::WriteOnly))
+    {
+        QMessageBox(QMessageBox::Warning, "File open error", m_outputFile.fileName()).exec();
+        return;
+    }
+
     QNetworkRequest networkRequest(m_url);
     m_reply = m_manager.get(networkRequest);
 
-    connect(m_reply, SIGNAL(sslErrors(const QList<QSslError> &)),
-            SLOT(sslErrors(const QList<QSslError> &)));
     connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)),
-            SLOT(error(QNetworkReply::NetworkError)));
+            this,    SLOT(slotError(QNetworkReply::NetworkError)));
+    connect(m_reply, &QIODevice::readyRead,
+            this,    &Downloader::slotReadyRead);
 
-    //connect(m_reply, SIGNAL(QNetworkReply::finished), SLOT(downloadFinished));
-    //connect(m_reply, SIGNAL(QIODEVICE::readyread))
-
+    ProgressDialog *progressDialog = new ProgressDialog(m_url);
+    progressDialog->setAttribute(Qt::WA_DeleteOnClose);
+    connect(m_reply,        &QNetworkReply::downloadProgress,
+            progressDialog, &ProgressDialog::networkReplyProgress);
+    connect(&m_manager,     &QNetworkAccessManager::finished,
+            progressDialog, &ProgressDialog::close);
+    progressDialog->show();
 }
 
-void Downloader::sslErrors(const QList<QSslError> &errors)
+void Downloader::slotSslErrors(QNetworkReply */*reply*/, const QList<QSslError> &errors)
 {
     QString str;
     for (const QSslError &error : errors)
-    {
-        str += error.errorString() + "/r/n";
-    }
+        str += (error.errorString() + "; ");
 
     QMessageBox(QMessageBox::Warning, "SSL Error", str).exec();
 }
 
-void Downloader::error(QNetworkReply::NetworkError networkError)
+void Downloader::slotError(QNetworkReply::NetworkError networkError)
 {
     QMessageBox(QMessageBox::Warning, "Network Error", QString::number(networkError)).exec();
 }
 
-void Downloader::downloadFinished(QNetworkReply *reply)
+void Downloader::slotReadyRead()
 {
+    if (m_outputFile.isOpen())
+        m_outputFile.write(m_reply->readAll());
+}
+
+void Downloader::slotFinished(QNetworkReply *reply)
+{
+    m_outputFile.close();
+
+    bool success = true;
+
     if (reply->error())
+        success = false;
+
+    if (success)
     {
-        QMessageBox(QMessageBox::Warning, "Network error", reply->errorString()).exec();
-        return;
+        int replyCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        switch (replyCode)
+        {
+        case 301:
+        case 302:
+        case 303:
+        case 304:
+        case 305:
+        case 307:
+        case 308:
+            success = false;
+            break;
+        }
     }
 
-    int replyCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    switch (replyCode)
-    {
-    case 301:
-    case 302:
-    case 303:
-    case 304:
-    case 305:
-    case 307:
-    case 308:
-        QMessageBox(QMessageBox::Warning, "Network status error",
-                    QString("code = %1").arg(replyCode)).exec();
-        return;
-    }
-
-    QByteArray downloadedData = reply->readAll();
-    if (downloadedData.isEmpty())
-    {
-        QMessageBox(QMessageBox::Warning, "Error", "Unknown error was occured.").exec();
-        return;
-    }
-
-    QFile file(m_outputFile);
-    if (file.exists())
-        file.remove();
-
-    file.write(downloadedData);
-    file.close();
-
+    emit downloadFinished(success);
     reply->deleteLater();
 }

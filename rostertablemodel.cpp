@@ -7,8 +7,14 @@
 
 RosterTableModel::RosterTableModel(QObject *parent)
     : QAbstractTableModel(parent)
+    , m_downloader(new Downloader(Config::downloadURL(), Config::rosterFileName()))
     , m_fetchedCount(0)
 {
+}
+
+RosterTableModel::~RosterTableModel()
+{
+    delete m_downloader;
 }
 
 int RosterTableModel::rowCount(const QModelIndex &/*parent*/) const
@@ -33,17 +39,6 @@ QVariant RosterTableModel::data(const QModelIndex &index, int role) const
 
             switch (column)
             {
-//            case 0:
-//            {
-//                QString avatar;
-//                if (!roster.account.firstName.isEmpty() &&
-//                    !roster.account.lastName.isEmpty())
-//                {
-//                    avatar.push_back(roster.account.firstName[0].toUpper());
-//                    avatar.push_back(roster.account.lastName[0].toUpper());
-//                }
-//                return avatar;
-//            }
             case 1: return roster.account.firstName;
             case 2: return roster.account.lastName;
             case 3: return m_rosterParser.groups()[roster.groupIndex].name;
@@ -172,14 +167,9 @@ void RosterTableModel::fetchMore(const QModelIndex &parent)
 
 void RosterTableModel::update()
 {
-    Downloader downloader(Config::downloadURL(), Config::rosterFileName());
-    downloader.execute();
-
-    // slot here to be connected on downloadFinished signal
-
-    m_rosterParser.update();
-
-    setFilter("");
+    connect(m_downloader, SIGNAL(downloadFinished(bool)),
+            this        , SLOT(downloadFinished(bool)));
+    m_downloader->execute();
 }
 
 void RosterTableModel::setFilter(const QString &filterText, bool invokeFetching)
@@ -195,5 +185,24 @@ void RosterTableModel::setFilter(const QString &filterText, bool invokeFetching)
 
 const Roster &RosterTableModel::getRoster(int index) const
 {
-    return m_rosterParser.rosters()[m_filterText.isEmpty() ? index : m_filteredResults[index]];
+    if (m_filterText.isEmpty())
+        return m_rosterParser.rosters()[index];
+
+    if (index >= m_filteredResults.size())
+    {
+        static Roster tmpRoster;
+        return tmpRoster;
+    }
+
+    return m_rosterParser.rosters()[m_filteredResults[index]];
+}
+
+void RosterTableModel::downloadFinished(bool success)
+{
+    if (success)
+    {
+        m_rosterParser.update();
+        setFilter("");
+        emit invokeTableUpdate();
+    }
 }

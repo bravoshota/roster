@@ -44,7 +44,8 @@ void MainWindow::on_updateButton_clicked()
 {
     ui->filterEdit->clear();
     m_tableModel->update();
-    resetTableView();
+    connect(m_tableModel, &RosterTableModel::invokeTableUpdate,
+            this,         &MainWindow::invokeTableUpdate);
 }
 
 void MainWindow::on_filterEdit_textEdited(const QString &text)
@@ -79,4 +80,9 @@ void MainWindow::finished(int /*result*/)
         delete m_rosterDialog;
         m_rosterDialog = nullptr;
     }
+}
+
+void MainWindow::invokeTableUpdate()
+{
+    resetTableView();
 }
