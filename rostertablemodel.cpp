@@ -2,6 +2,8 @@
 #include "downloader.h"
 #include "config.h"
 #include <QDebug>
+#include <QPixmap>
+#include <QPainter>
 
 RosterTableModel::RosterTableModel(QObject *parent)
     : QAbstractTableModel(parent)
@@ -21,7 +23,9 @@ int RosterTableModel::columnCount(const QModelIndex &/*parent*/) const
 
 QVariant RosterTableModel::data(const QModelIndex &index, int role) const
 {
-    if (role == Qt::DisplayRole)
+    switch (role)
+    {
+    case Qt::DisplayRole:
     {
         auto addSingleRow = [this](int row, int column)->QVariant
         {
@@ -29,17 +33,17 @@ QVariant RosterTableModel::data(const QModelIndex &index, int role) const
 
             switch (column)
             {
-            case 0:
-            {
-                QString avatar;
-                if (!roster.account.firstName.isEmpty() &&
-                        !roster.account.lastName.isEmpty())
-                {
-                    avatar.push_back(roster.account.firstName[0].toUpper());
-                    avatar.push_back(roster.account.lastName[0].toUpper());
-                }
-                return avatar;
-            }
+//            case 0:
+//            {
+//                QString avatar;
+//                if (!roster.account.firstName.isEmpty() &&
+//                    !roster.account.lastName.isEmpty())
+//                {
+//                    avatar.push_back(roster.account.firstName[0].toUpper());
+//                    avatar.push_back(roster.account.lastName[0].toUpper());
+//                }
+//                return avatar;
+//            }
             case 1: return roster.account.firstName;
             case 2: return roster.account.lastName;
             case 3: return m_rosterParser.groups()[roster.groupIndex].name;
@@ -49,19 +53,17 @@ QVariant RosterTableModel::data(const QModelIndex &index, int role) const
 
         if (m_filterText.isEmpty())
         {
-            if (index.column() >= 0 && index.column() < 4 &&
+            if (index.column() >= 1 && index.column() < 4 &&
                 index.row() >= 0 && index.row() < m_rosterParser.rosters().count())
             {
                 QVariant variant = addSingleRow(index.row(), index.column());
                 if (variant.isValid())
                     return variant;
             }
-
-            Q_ASSERT(false);
         }
         else
         {
-            if (index.column() >= 0 && index.column() < 4 &&
+            if (index.column() >= 1 && index.column() < 4 &&
                 index.row() >= 0 && index.row() < m_filteredResults.count())
             {
                 QVariant variant = addSingleRow(m_filteredResults[index.row()], index.column());
@@ -69,6 +71,22 @@ QVariant RosterTableModel::data(const QModelIndex &index, int role) const
                     return variant;
             }
         }
+        break;
+    }
+    case Qt::DecorationRole:
+    {
+        if (m_filterText.isEmpty())
+        {
+            if (index.column() == 0 && index.row() >= 0 && index.row() < m_rosterParser.rosters().count())
+                return QVariant(*m_rosterParser.rosters()[index.row()].icon32x32());
+        }
+        else
+        {
+            if (index.column() == 0 && index.row() >= 0 && index.row() < m_filteredResults.count())
+                return QVariant(*m_rosterParser.rosters()[m_filteredResults[index.row()]].icon32x32());
+        }
+        break;
+    }
     }
 
     return QVariant();

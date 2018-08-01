@@ -20,6 +20,12 @@ void Downloader::execute()
 
     connect(m_reply, SIGNAL(sslErrors(const QList<QSslError> &)),
             SLOT(sslErrors(const QList<QSslError> &)));
+    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)),
+            SLOT(error(QNetworkReply::NetworkError)));
+
+    //connect(m_reply, SIGNAL(QNetworkReply::finished), SLOT(downloadFinished));
+    //connect(m_reply, SIGNAL(QIODEVICE::readyread))
+
 }
 
 void Downloader::sslErrors(const QList<QSslError> &errors)
@@ -31,6 +37,11 @@ void Downloader::sslErrors(const QList<QSslError> &errors)
     }
 
     QMessageBox(QMessageBox::Warning, "SSL Error", str).exec();
+}
+
+void Downloader::error(QNetworkReply::NetworkError networkError)
+{
+    QMessageBox(QMessageBox::Warning, "Network Error", QString::number(networkError)).exec();
 }
 
 void Downloader::downloadFinished(QNetworkReply *reply)

@@ -30,16 +30,17 @@ SOURCES += \
     config.cpp \
     rosterparser.cpp \
     rostertablemodel.cpp \
-    dialog.cpp
+    dialog.cpp \
+    common.cpp
 
 HEADERS += \
     mainwindow.h \
     downloader.h \
     config.h \
-    globals.h \
     rosterparser.h \
     rostertablemodel.h \
-    dialog.h
+    dialog.h \
+    common.h
 
 FORMS += \
     mainwindow.ui \

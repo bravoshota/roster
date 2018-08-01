@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <QDateTime>
+#include <QIcon>
 
 struct RosterGroup
 {
@@ -28,6 +29,9 @@ inline const char *toString(SEX sex)
 
 struct Roster
 {
+    Roster();
+    ~Roster();
+
     QString id;
     int groupIndex;
     struct Account
@@ -44,4 +48,10 @@ struct Roster
         QDateTime birthday;
         QDateTime createTime;
     } account;
+
+    QIcon *icon32x32() const;
+    QPixmap createPixmap(const QSize iconSize, QColor bkgndColor) const;
+
+private:
+    mutable QIcon *icon; // optimization: generate icon only when is accessed
 };

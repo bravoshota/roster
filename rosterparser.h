@@ -2,7 +2,7 @@
 
 #include <QVariantMap>
 #include <QVector>
-#include "globals.h"
+#include "common.h"
 
 class RosterParser
 {

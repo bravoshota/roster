@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
 
 class QNetworkReply;
 
@@ -17,6 +18,7 @@ public:
 public slots:
     void downloadFinished(QNetworkReply *reply);
     void sslErrors(const QList<QSslError> &errors);
+    void error(QNetworkReply::NetworkError networkError);
 
 private:
     QNetworkAccessManager m_manager;
