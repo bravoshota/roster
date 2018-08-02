@@ -51,6 +51,7 @@ FORMS += \
 CONFIG_FILE = config.json
 
 DISTFILES += \
+    README.md \
     $$CONFIG_FILE
 
 #copy config file to build directory

@@ -20,3 +20,7 @@ TIPS:
 - config.json is part of repository and is installed (with default params) during the build.
 - user can watch download progress by appeared progress dialog and cancel it by request.
 - downloading process is non-blocking and user can continue viewing contacts.
+- installing config file is implemented by qmake; The name of the config is used in the code as defined in qmake.
+
+Regards,
+Shota Meladze
