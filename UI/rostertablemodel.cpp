@@ -10,11 +10,22 @@ RosterTableModel::RosterTableModel(QObject *parent)
     , m_downloader(new Downloader(Config::downloadURL(), Config::rosterFileName()))
     , m_fetchedCount(0)
 {
+    connect(m_downloader, SIGNAL(downloadFinished(bool)),
+            this        , SLOT(downloadFinished(bool)));
 }
 
 RosterTableModel::~RosterTableModel()
 {
     delete m_downloader;
+}
+
+void RosterTableModel::init()
+{
+    if (QFile(Config::rosterFileFullName()).exists())
+    {
+        m_rosterParser.update();
+        emit updateWindow(true);
+    }
 }
 
 int RosterTableModel::rowCount(const QModelIndex &/*parent*/) const
@@ -135,25 +146,28 @@ void RosterTableModel::fetchMore(const QModelIndex &parent)
     }
     else
     {
-        int fetchedCount = 0;
+        QVector<int> filteredResults;
+        filteredResults.reserve(pageSize);
         while (m_fetchedCount < m_rosterParser.rosters().size())
         {
             const Roster::Account &account = m_rosterParser.rosters()[m_fetchedCount].account;
             if ((account.firstName + " " + account.lastName).toLower().contains(m_filterText))
-            {
-                m_filteredResults.push_back(m_fetchedCount);
-                ++fetchedCount;
-            }
+                filteredResults.push_back(m_fetchedCount);
 
             ++m_fetchedCount;
 
-            if (fetchedCount == pageSize)
+            if (filteredResults.size() == pageSize)
                 break;
         }
 
-        if (fetchedCount > 0)
+        if (filteredResults.size() > 0)
         {
-            beginInsertRows(parent, m_filteredResults.size() - fetchedCount, m_filteredResults.size() - 1);
+            beginInsertRows(parent,
+                            m_filteredResults.size(),
+                            m_filteredResults.size() + filteredResults.size() - 1);
+
+            m_filteredResults.append(filteredResults);
+
             endInsertRows();
 
             QString outputText;
@@ -162,13 +176,23 @@ void RosterTableModel::fetchMore(const QModelIndex &parent)
                                m_rosterParser.rosters().size());
             emit newDataFetched(outputText);
         }
+        else
+        {
+            emit updateWindow(true);
+        }
     }
 }
 
-void RosterTableModel::update()
+void RosterTableModel::clear()
 {
-    connect(m_downloader, SIGNAL(downloadFinished(bool)),
-            this        , SLOT(downloadFinished(bool)));
+    beginResetModel();
+    m_fetchedCount = 0;
+    m_filteredResults.clear();
+    endResetModel();
+}
+
+void RosterTableModel::download()
+{
     m_downloader->execute();
 }
 
@@ -177,10 +201,7 @@ void RosterTableModel::setFilter(const QString &filterText, bool invokeFetching)
     m_filterText = filterText.toLower();
 
     if (invokeFetching)
-    {
-        m_fetchedCount = 0;
-        m_filteredResults.clear();
-    }
+        clear();
 }
 
 const Roster &RosterTableModel::getRoster(int index) const
@@ -202,7 +223,8 @@ void RosterTableModel::downloadFinished(bool success)
     if (success)
     {
         m_rosterParser.update();
-        setFilter("");
-        emit invokeTableUpdate();
+        setFilter("", false);
     }
+
+    emit updateWindow(success);
 }

@@ -61,3 +61,8 @@ void Config::initialize()
 
     m_hasError = false;
 }
+
+QString Config::rosterFileFullName()
+{
+    return QDir::currentPath() + "/" + m_rosterFileName;
+}

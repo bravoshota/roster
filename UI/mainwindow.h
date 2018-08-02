@@ -21,13 +21,13 @@ protected:
     void resetTableView();
 
 private slots:
-    void on_updateButton_clicked();
+    void on_fetchButton_clicked();
     void on_filterEdit_textEdited(const QString &text);
     void on_tableView_doubleClicked(const QModelIndex &index);
 
     void newDataFetched(QString text);
-    void finished(int result);
-    void invokeTableUpdate();
+    void destroyDialog(int result = 0);
+    void updateWindow(bool resetTable);
 
 private:
     Ui::MainWindow *ui;

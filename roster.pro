@@ -24,29 +24,29 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
+    UI/mainwindow.cpp \
+    UI/dialog.cpp \
+    UI/progressdialog.cpp \
+    UI/rostertablemodel.cpp \
     main.cpp \
-    mainwindow.cpp \
     downloader.cpp \
     config.cpp \
     rosterparser.cpp \
-    rostertablemodel.cpp \
-    dialog.cpp \
-    common.cpp \
-    progressdialog.cpp
+    common.cpp
 
 HEADERS += \
-    mainwindow.h \
+    UI/mainwindow.h \
+    UI/dialog.h \
+    UI/progressdialog.h \
+    UI/rostertablemodel.h \
     downloader.h \
     config.h \
     rosterparser.h \
-    rostertablemodel.h \
-    dialog.h \
-    common.h \
-    progressdialog.h
+    common.h
 
 FORMS += \
-    mainwindow.ui \
-    dialog.ui
+    UI/mainwindow.ui \
+    UI/dialog.ui
 
 CONFIG_FILE = config.json
 

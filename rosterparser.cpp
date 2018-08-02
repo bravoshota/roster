@@ -1,6 +1,5 @@
 #include "rosterparser.h"
 #include "config.h"
-#include <QDir>
 #include <QFile>
 #include <QMessageBox>
 #include <QJsonObject>
@@ -21,9 +20,7 @@ void RosterParser::update()
     m_groupArr.clear();
     m_hasError = true;
 
-    QString fullName = QDir::currentPath() + "/" + Config::rosterFileName();
-
-    QFile rosterFile(fullName);
+    QFile rosterFile(Config::rosterFileFullName());
     if (!rosterFile.exists())
     {
         QMessageBox(QMessageBox::Warning, "Roster loader Error",
@@ -44,7 +41,8 @@ void RosterParser::update()
     QJsonDocument jsonDocument = QJsonDocument::fromJson(rosterTextData.toUtf8());
     if (jsonDocument.isObject() == false)
     {
-        QMessageBox(QMessageBox::Warning, "Roster loader Error", "not a valid object data").exec();
+        QMessageBox(QMessageBox::Warning, "Roster loader Error",
+                    QString("Not a valid JSon data: \"%1\"\nPlease fetch it again!").arg(Config::rosterFileName())).exec();
         return;
     }
 

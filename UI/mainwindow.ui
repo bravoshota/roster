@@ -44,9 +44,9 @@
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="updateButton">
+     <widget class="QPushButton" name="fetchButton">
       <property name="text">
-       <string>Update</string>
+       <string>Fetch</string>
       </property>
      </widget>
     </item>

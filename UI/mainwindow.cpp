@@ -1,7 +1,9 @@
-#include "mainwindow.h"
 #include "ui_mainwindow.h"
+
+#include "config.h"
+#include "dialog.h"
+#include "mainwindow.h"
 #include "rostertablemodel.h"
-#include <dialog.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -10,10 +12,21 @@ MainWindow::MainWindow(QWidget *parent)
     , m_tableModel(new RosterTableModel(nullptr))
 {
     ui->setupUi(this);
+
+    setWindowTitle("Roster Main Window");
+
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setFocusPolicy(Qt::NoFocus);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    connect(m_tableModel, SIGNAL(newDataFetched(QString)), SLOT(newDataFetched(QString)));
+
+    connect(m_tableModel, SIGNAL(newDataFetched(QString)),
+            this        , SLOT(newDataFetched(QString)));
+    connect(m_tableModel, &RosterTableModel::updateWindow,
+            this,         &MainWindow::updateWindow);
+
+    m_tableModel->init();
+
+    ui->fetchButton->setToolTip(QString("Fetch from \"%1\"").arg(Config::downloadURL()));
 }
 
 MainWindow::~MainWindow()
@@ -40,12 +53,13 @@ void MainWindow::resetTableView()
     }
 }
 
-void MainWindow::on_updateButton_clicked()
+void MainWindow::on_fetchButton_clicked()
 {
+    destroyDialog();
+    ui->fetchButton->setEnabled(false);
     ui->filterEdit->clear();
-    m_tableModel->update();
-    connect(m_tableModel, &RosterTableModel::invokeTableUpdate,
-            this,         &MainWindow::invokeTableUpdate);
+    m_tableModel->clear();
+    m_tableModel->download();
 }
 
 void MainWindow::on_filterEdit_textEdited(const QString &text)
@@ -59,13 +73,12 @@ void MainWindow::on_filterEdit_textEdited(const QString &text)
 
 void MainWindow::on_tableView_doubleClicked(const QModelIndex &index)
 {
-    if (m_rosterDialog)
-        delete m_rosterDialog;
+    destroyDialog();
 
     m_rosterDialog = new Dialog(this, m_tableModel->getRoster(index.row()));
     m_rosterDialog->show();
 
-    connect(m_rosterDialog, SIGNAL(finished(int)), SLOT(finished(int)));
+    connect(m_rosterDialog, SIGNAL(finished(int)), SLOT(destroyDialog(int)));
 }
 
 void MainWindow::newDataFetched(QString text)
@@ -73,7 +86,7 @@ void MainWindow::newDataFetched(QString text)
     ui->label->setText(text);
 }
 
-void MainWindow::finished(int /*result*/)
+void MainWindow::destroyDialog(int /*result*/)
 {
     if (m_rosterDialog != nullptr)
     {
@@ -82,7 +95,9 @@ void MainWindow::finished(int /*result*/)
     }
 }
 
-void MainWindow::invokeTableUpdate()
+void MainWindow::updateWindow(bool resetTable)
 {
-    resetTableView();
+    ui->fetchButton->setEnabled(true);
+    if (resetTable)
+        resetTableView();
 }

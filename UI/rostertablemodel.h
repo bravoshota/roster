@@ -11,12 +11,16 @@ class RosterTableModel : public QAbstractTableModel
 public:
     RosterTableModel(QObject *parent);
     ~RosterTableModel();
+
+    void init();
+
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
-    void update();
+    void clear();
+    void download();
     void setFilter(const QString &filterText, bool invokeFetching = true);
 
     const Roster &getRoster(int index) const;
@@ -26,7 +30,7 @@ public slots:
 
 signals:
     void newDataFetched(QString);
-    void invokeTableUpdate();
+    void updateWindow(bool resetTable);
 
 protected:
     bool canFetchMore(const QModelIndex &parent) const override;

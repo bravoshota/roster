@@ -4,7 +4,6 @@
 ProgressDialog::ProgressDialog(const QUrl &url)
 {
     setWindowTitle(tr("Download Progress"));
-    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setLabelText(tr("Downloading \"%1\"").arg(url.toDisplayString()));
     setMinimum(0);
     setValue(0);

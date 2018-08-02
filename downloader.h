@@ -21,9 +21,9 @@ signals:
 
 protected slots:
     void slotSslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
-    void slotError(QNetworkReply::NetworkError networkError);
     void slotReadyRead();
     void slotFinished(QNetworkReply *reply);
+    void cancelDownload();
 
 private:
     QNetworkAccessManager m_manager;

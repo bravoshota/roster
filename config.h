@@ -10,6 +10,7 @@ public:
     static const QString &downloadURL() { return m_downloadURL; }
     static const QString &rosterFileName() { return m_rosterFileName; }
     static bool hasError() { return m_hasError; }
+    static QString rosterFileFullName();
 
 private:
     static QString m_downloadURL;
